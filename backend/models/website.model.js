@@ -6,6 +6,10 @@ import Stats from './stats.model.js';
 
 const websiteSchema = new Schema(
   {
+    country : {
+      type: String,
+      required: true,
+    },
     language: {
       type: String,
       required: true,
@@ -15,6 +19,18 @@ const websiteSchema = new Schema(
       required: true,
     },
     nofollow: {
+      type: Boolean,
+      default: false,
+    },
+    followLinks : {
+      type: Boolean,
+      default: false,
+    },
+    sponsoredTags: {
+      type: Boolean,
+      default: false,
+    },
+    noSponsoredTags: {
       type: Boolean,
       default: false,
     },
@@ -92,6 +108,9 @@ const websiteSchema = new Schema(
     highlightMonths: {
       type: Number,
       default: 0,
+    },
+    highlightMonthsEndDate: {
+      type: Date,
     },
     status: {
       type: String,
