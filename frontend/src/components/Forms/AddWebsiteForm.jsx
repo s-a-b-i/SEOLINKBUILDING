@@ -127,7 +127,7 @@ const AddWebsiteForm = ({ initialData, isEditing, websiteId }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-6xl space-y-6">
+    <form onSubmit={handleSubmit} className="max-w-5xl space-y-6">
       <h1 className="text-2xl font-bold mb-6">
         {isEditing ? 'Edit Website / Fanpage' : 'Add Website / Fanpage'}
       </h1>
