@@ -26,11 +26,11 @@ const websiteSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    sponsoredTags: {
+    sponsoredTag: {
       type: Boolean,
       default: false,
     },
-    noSponsoredTags: {
+    noSponsoredTag: {
       type: Boolean,
       default: false,
     },
