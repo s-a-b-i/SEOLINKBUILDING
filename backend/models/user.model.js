@@ -30,6 +30,10 @@ const userSchema = new mongoose.Schema({
         type : Boolean,
         default : true,
     },
+    balance: {
+        type: Number,
+        default: 0,
+    },
     resetPasswordToken: String,
     resetPasswordExpireAt: Date,
     verificationToken: String,
