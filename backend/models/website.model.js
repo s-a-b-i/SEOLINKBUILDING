@@ -111,6 +111,7 @@ const websiteSchema = new Schema(
     },
     highlightMonthsEndDate: {
       type: Date,
+      default: Date.now,
     },
     status: {
       type: String,
