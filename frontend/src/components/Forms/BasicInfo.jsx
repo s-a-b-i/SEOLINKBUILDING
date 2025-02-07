@@ -5,7 +5,7 @@ import ReactCountryFlag from 'react-country-flag';
 import Select from 'react-select';
 
 // Mapping countries to their ISO country codes and languages
-const countryLanguageMap = {
+export const countryLanguageMap = {
   'Austria': { code: 'AT', languages: ['German'] },
   'Belgium': { code: 'BE', languages: ['Dutch', 'French', 'German'] },
   'Bulgaria': { code: 'BG', languages: ['Bulgarian'] },
@@ -68,9 +68,9 @@ const mediaTypes = [
   { value: "Newspaper", label: "Newspaper" },
 ];
 
-const BasicInfo = ({ formData, handleInputChange }) => {
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [availableLanguages, setAvailableLanguages] = useState([]);
+const BasicInfo = ({ formData, handleInputChange, selectedCountry, setSelectedCountry, availableLanguages, setAvailableLanguages }) => {
+  // const [selectedCountry, setSelectedCountry] = useState('');
+  // const [availableLanguages, setAvailableLanguages] = useState([]);
 
   const handleCountryChange = (selectedOption) => {
     const country = selectedOption.value;
@@ -80,35 +80,23 @@ const BasicInfo = ({ formData, handleInputChange }) => {
     const languages = countryLanguageMap[country]?.languages || [];
     setAvailableLanguages(languages);
 
-    // Reset language selection when country changes
-    handleInputChange({
-      target: {
-        name: 'language',
-        value: ''
-      }
-    });
-
-    // Update country in parent component's form data
+    // Update both country and reset language in parent's form data
     handleInputChange({
       target: {
         name: 'country',
         value: country
       }
     });
+
+    handleInputChange({
+      target: {
+        name: 'language',
+        value: ''
+      }
+    });
   };
 
-  const tooltipContent = {
-    language: "Select primary language",
-    mediaType: "Choose media platform",
-    nofollow: "Add nofollow attribute",
-    webDomain: "Enter website URL",
-    mediaName: "Enter official name",
-    followLinks: "Enable follow links",
-    sponsoredTag: "Tag sponsored articles",
-    noSponsoredTag: "Do not tag sponsored articles",
-  };
-
-  const countryOptions = Object.keys(countryLanguageMap).map((country) => ({
+    const countryOptions = Object.keys(countryLanguageMap).map((country) => ({
     value: country,
     label: (
       <div className="flex items-center">
@@ -121,6 +109,18 @@ const BasicInfo = ({ formData, handleInputChange }) => {
       </div>
     ),
   }));
+  const tooltipContent = {
+    language: "Select primary language",
+    mediaType: "Choose media platform",
+    nofollow: "Add nofollow attribute",
+    webDomain: "Enter website URL",
+    mediaName: "Enter official name",
+    followLinks: "Enable follow links",
+    sponsoredTag: "Tag sponsored articles",
+    noSponsoredTag: "Do not tag sponsored articles",
+  };
+
+
 
   return (
     <div className="max-w-4xl">

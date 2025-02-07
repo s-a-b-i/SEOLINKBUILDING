@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; 
+import React, { useState , useEffect } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { websiteService } from '../../utils/services';
@@ -8,6 +8,10 @@ import PriceSection from './PriceSection';
 import EditorSection from './EditorSection';
 import SocialMediaSection from './SocialMediaSection';
 import { useAuthStore } from "../../store/authStore"; // ✅ Import auth store
+// AddWebsiteForm.jsx
+import { countryLanguageMap } from './BasicInfo'; // Import from BasicInfo where it's defined
+
+
 
 const initialFormData = {
   country: "", // Add country field
@@ -42,17 +46,21 @@ const AddWebsiteForm = ({ initialData, isEditing, websiteId }) => {
   const [formData, setFormData] = useState(initialData || initialFormData);
   const [description, setDescription] = useState(initialData?.description || "");
   const [publicationGuidelines, setPublicationGuidelines] = useState(initialData?.publicationGuidelines || "");
-  const [selectedCountry, setSelectedCountry] = useState(initialData?.country || '');
-  const [availableLanguages, setAvailableLanguages] = useState(
-    initialData?.country 
-      ? countryLanguageMap[initialData.country]?.languages || [] 
-      : []
-  );
+  const [selectedCountry, setSelectedCountry] = useState('');
+  const [availableLanguages, setAvailableLanguages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   // 🔥 Get user from Auth Store
   const { user } = useAuthStore();
+
+  useEffect(() => {
+    if (initialData?.country) {
+      setSelectedCountry(initialData.country);
+      const languages = countryLanguageMap[initialData.country]?.languages || [];
+      setAvailableLanguages(languages);
+    }
+  }, [initialData]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
