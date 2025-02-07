@@ -491,6 +491,7 @@ const ToApproveList = () => {
         discountprop={selectedWebsite?.discount}
         slotsprop={selectedWebsite?.slots}
         pricePerPublicationprop={selectedWebsite?.pricePerPublication}
+        websitePrice={selectedWebsite?.price} 
       />
 
       <HighlightMediaModal

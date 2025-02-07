@@ -10,9 +10,13 @@ import SocialMediaSection from './SocialMediaSection';
 import { useAuthStore } from "../../store/authStore"; // ✅ Import auth store
 
 const initialFormData = {
+  country: "", // Add country field
   language: "",
   mediaType: "",
   nofollow: false,
+  followLinks: false,
+  sponsoredTag: false,
+  noSponsoredTag: false,
   category: [],
   webDomain: "",
   mediaName: "",
@@ -38,6 +42,12 @@ const AddWebsiteForm = ({ initialData, isEditing, websiteId }) => {
   const [formData, setFormData] = useState(initialData || initialFormData);
   const [description, setDescription] = useState(initialData?.description || "");
   const [publicationGuidelines, setPublicationGuidelines] = useState(initialData?.publicationGuidelines || "");
+  const [selectedCountry, setSelectedCountry] = useState(initialData?.country || '');
+  const [availableLanguages, setAvailableLanguages] = useState(
+    initialData?.country 
+      ? countryLanguageMap[initialData.country]?.languages || [] 
+      : []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -46,26 +56,33 @@ const AddWebsiteForm = ({ initialData, isEditing, websiteId }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-
+  
     if (name === "price") {
-      const cleanedValue = value.replace(/^0+/, '').replace(/[^\d]/g, '');
+      const cleanedValue = value.replace(/^0+/, "").replace(/[^\d]/g, "");
       const numValue = parseInt(cleanedValue) || 0;
       const commission = numValue * 0.1;
       const netProfit = numValue * 0.9;
-
-      setFormData(prevData => ({
+  
+      setFormData((prevData) => ({
         ...prevData,
         price: cleanedValue,
         commission,
-        netProfit
+        netProfit,
+      }));
+    } else if (name === "country") {
+      setFormData((prevData) => ({
+        ...prevData,
+        country: value,
+        language: "", // Reset language when country changes
       }));
     } else {
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
         [name]: type === "checkbox" ? checked : value,
       }));
     }
   };
+  
 
   const handleCategoryChange = (selectedOptions) => {
     const categories = selectedOptions ? selectedOptions.map(option => option.value) : [];
@@ -123,8 +140,12 @@ You can sell publications on the website by putting the domain name in the Websi
 Rankister was also designed for companies or people who do not own a website but have pages or groups on social, for example who work as Influencers and have only Social profiles. In that case the Site Domain Name is left Blank and only the Social part is filled in by putting the link of the page or Group. If you want more information before proceeding, you can contact us from the Contact page.</p>
 
       <BasicInfo 
-        formData={formData} 
-        handleInputChange={handleInputChange} 
+         formData={formData} 
+         handleInputChange={handleInputChange}
+         selectedCountry={selectedCountry}
+         setSelectedCountry={setSelectedCountry}
+         availableLanguages={availableLanguages}
+         setAvailableLanguages={setAvailableLanguages}
       />
 
       <CategorySelection 
