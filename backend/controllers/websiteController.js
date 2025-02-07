@@ -240,9 +240,17 @@ export async function highlightMedia(req, res) {
       return res.status(403).json({ message: error.message });
     }
 
+    // Calculate the end date based on current date plus the provided months
+    const currentDate = new Date();
+    const endDate = new Date(currentDate);
+    endDate.setMonth(endDate.getMonth() + Number(months));
+
     const website = await Website.findByIdAndUpdate(
       req.params.id,
-      { highlightMonths: months },
+      { 
+        highlightMonths: months,
+        highlightMonthsEndDate: endDate
+      },
       { new: true, runValidators: true }
     );
 
