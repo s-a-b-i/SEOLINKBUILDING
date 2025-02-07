@@ -179,17 +179,15 @@ const Catalog = () => {
   }, [user]);
 
   const handleSort = (field) => {
-    // If clicking the same field, toggle direction
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
-      // If clicking new field, set to ascending
       setSortField(field);
       setSortDirection("asc");
     }
   
     const sortedWebsites = [...websites].sort((a, b) => {
-      // Prioritize items with a future highlightMonthsEndDate
+      // Always prioritize items with a future highlightMonthsEndDate
       const aHighlighted = new Date(a.highlightMonthsEndDate) > new Date();
       const bHighlighted = new Date(b.highlightMonthsEndDate) > new Date();
   
@@ -229,7 +227,6 @@ const Catalog = () => {
   
     setWebsites(sortedWebsites);
   };
-
   const handleSearch = useCallback(
     debounce(async () => {
       try {
@@ -237,11 +234,11 @@ const Catalog = () => {
         const searchParams = {
           userId: user._id,
         };
-
+  
         if (searchQuery) {
           searchParams.searchQuery = searchQuery.toLowerCase();
         }
-
+  
         if (priceRange.min > 0 || priceRange.max < 50000) {
           searchParams.minPrice = priceRange.min;
           searchParams.maxPrice = priceRange.max;
@@ -252,15 +249,25 @@ const Catalog = () => {
         if (category) searchParams.category = category;
         if (country) searchParams.country = country;
         if (googleNews) searchParams.googleNews = googleNews === "Yes";
-
+  
         if (sensitiveTopics.length > 0) {
           sensitiveTopics.forEach((topic) => {
             searchParams[topic.toLowerCase()] = true;
           });
         }
-
+  
         const data = await searchService.searchWebsites(searchParams);
-        setWebsites(data);
+        // Sort by highlightMonthsEndDate
+        const sortedData = data.sort((a, b) => {
+          const aHighlighted = new Date(a.highlightMonthsEndDate) > new Date();
+          const bHighlighted = new Date(b.highlightMonthsEndDate) > new Date();
+  
+          if (aHighlighted && !bHighlighted) return -1;
+          if (!aHighlighted && bHighlighted) return 1;
+  
+          return 0;
+        });
+        setWebsites(sortedData);
       } catch (error) {
         console.error("Error searching websites:", error);
       } finally {
@@ -283,7 +290,7 @@ const Catalog = () => {
   useEffect(() => {
     const handleInitialLoad = async () => {
       const params = new URLSearchParams(location.search);
-
+    
       const queryFromURL = params.get("query");
       const minPriceFromURL = params.get("minPrice");
       const maxPriceFromURL = params.get("maxPrice");
@@ -294,7 +301,7 @@ const Catalog = () => {
       const countryFromURL = params.get("country");
       const googleNewsFromURL = params.get("googleNews");
       const sensitiveTopicsFromURL = params.getAll("sensitiveTopics");
-
+    
       if (
         queryFromURL ||
         minPriceFromURL ||
@@ -323,7 +330,7 @@ const Catalog = () => {
         if (sensitiveTopicsFromURL.length > 0) {
           setSensitiveTopics(sensitiveTopicsFromURL);
         }
-
+    
         const searchParams = {
           userId: user._id,
           ...(queryFromURL && { searchQuery: queryFromURL.toLowerCase() }),
@@ -336,41 +343,25 @@ const Catalog = () => {
           ...(countryFromURL && { country: countryFromURL }),
           ...(googleNewsFromURL && { googleNews: googleNewsFromURL === "Yes" }),
         };
-
+    
         if (sensitiveTopicsFromURL.length > 0) {
           sensitiveTopicsFromURL.forEach((topic) => {
             searchParams[topic.toLowerCase()] = true;
           });
         }
-
+    
         try {
           setLoading(true); // Start loading
-          const data = await searchService.searchWebsites(
-            user._id,
-            searchParams
-          );
+          const data = await searchService.searchWebsites(user._id, searchParams);
           // Sort by highlightMonthsEndDate
           const sortedData = data.sort((a, b) => {
-            try {
-              const aDate = new Date(a.highlightMonthsEndDate);
-              const bDate = new Date(b.highlightMonthsEndDate);
-              const currentDate = new Date();
-              
-              // Check if dates are valid
-              if (isNaN(aDate.getTime()) || isNaN(bDate.getTime())) {
-                return 0; // Keep original order if dates are invalid
-              }
-              
-              const aHighlighted = aDate > currentDate;
-              const bHighlighted = bDate > currentDate;
-              
-              if (aHighlighted && !bHighlighted) return -1;
-              if (!aHighlighted && bHighlighted) return 1;
-              return 0;
-            } catch (error) {
-              console.error('Error sorting by highlight date:', error);
-              return 0; // Keep original order in case of errors
-            }
+            const aHighlighted = new Date(a.highlightMonthsEndDate) > new Date();
+            const bHighlighted = new Date(b.highlightMonthsEndDate) > new Date();
+    
+            if (aHighlighted && !bHighlighted) return -1;
+            if (!aHighlighted && bHighlighted) return 1;
+    
+            return 0;
           });
           setWebsites(sortedData);
         } catch (error) {
@@ -384,9 +375,13 @@ const Catalog = () => {
           const data = await websiteService.getAllWebsites(user._id);
           // Sort by highlightMonthsEndDate
           const sortedData = data.sort((a, b) => {
-            const dateA = new Date(a.highlightMonthsEndDate).getTime();
-            const dateB = new Date(b.highlightMonthsEndDate).getTime();
-            return dateA - dateB;
+            const aHighlighted = new Date(a.highlightMonthsEndDate) > new Date();
+            const bHighlighted = new Date(b.highlightMonthsEndDate) > new Date();
+    
+            if (aHighlighted && !bHighlighted) return -1;
+            if (!aHighlighted && bHighlighted) return 1;
+    
+            return 0;
           });
           setWebsites(sortedData);
         } catch (error) {
@@ -853,17 +848,16 @@ const Catalog = () => {
                               </td>
                             )}
 
-                            {visibleColumns.name && (
-                              <td className="p-3 text-foundations-dark whitespace-nowrap">
-                                {item.webDomain}
-                                {new Date(item.highlightMonthsEndDate) >
-                                  new Date() && (
-                                  <span className="ml-2 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs">
-                                    AD
-                                  </span>
-                                )}
-                              </td>
-                            )}
+{visibleColumns.name && (
+  <td className="p-3 text-foundations-dark whitespace-nowrap">
+    {item.webDomain}
+    {new Date(item.highlightMonthsEndDate) > new Date() && (
+      <span className="ml-2 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs">
+        AD
+      </span>
+    )}
+  </td>
+)}
                             {visibleColumns.price && (
                               <td className="p-3 text-foundations-dark whitespace-nowrap">
                                 € {item.price.toFixed(2)}
