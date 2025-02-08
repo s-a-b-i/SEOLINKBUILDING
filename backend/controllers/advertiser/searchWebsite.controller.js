@@ -5,15 +5,8 @@ import { getCurrentDateTime } from '../../utils/getCurrentDateTime.js';
 
 export async function searchWebsites(req, res) {
   try {
-    const userId = req.body.userId;
-
-    try {
-      await checkUserAndBlockStatus(userId);
-    } catch (error) {
-      return res.status(403).json({ message: error.message });
-    }
-
-    const {
+    const { 
+      userId, 
       searchQuery,
       minPrice,
       maxPrice,
@@ -26,59 +19,75 @@ export async function searchWebsites(req, res) {
       cbd,
       adult,
       trading,
-      googleNews
-    } = req.query;
+      googleNews 
+    } = req.body;
 
-    const filters = {};
+    try {
+      await checkUserAndBlockStatus(userId);
+    } catch (error) {
+      return res.status(403).json({ message: error.message });
+    }
 
+    const filters = { status: 'approved' };
+
+    // Handle search query
     if (searchQuery) {
-      filters.webDomain = { $regex: searchQuery, $options: 'i' };
-      filters.mediaType = { $regex: searchQuery, $options: 'i' };
-      filters.mediaName = { $regex: searchQuery, $options: 'i' };
+      const cleanQuery = searchQuery.toLowerCase()
+        .replace(/^(https?:\/\/)?(www\.)?/, '')
+        .replace(/\/$/, '');
+
+      filters.$or = [
+        { webDomain: { $regex: cleanQuery, $options: 'i' } },
+        { mediaName: { $regex: cleanQuery, $options: 'i' } }
+      ];
     }
-    if (minPrice) {
-      filters.price = { ...filters.price, $gte: Number(minPrice) };
+
+    // Add other filters
+    if (minPrice || maxPrice) {
+      filters.price = {};
+      if (minPrice) filters.price.$gte = Number(minPrice);
+      if (maxPrice) filters.price.$lte = Number(maxPrice);
     }
-    if (maxPrice) {
-      filters.price = { ...filters.price, $lte: Number(maxPrice) };
-    }
+
     if (da) {
       filters.da = { $gte: Number(da[0]), $lte: Number(da[1]) };
     }
+
     if (ascore) {
       filters.ascore = { $gte: Number(ascore[0]), $lte: Number(ascore[1]) };
     }
+
     if (mediaType) {
       filters.mediaType = mediaType;
     }
+
     if (category) {
-      filters.category = { $in: [category] };
+      filters.category = { $in: Array.isArray(category) ? category : [category] };
     }
+
     if (country) {
       filters.language = country;
     }
-    if (gambling ) {
-      filters.sensitiveTopics = { $in: ['Gambling'] };
-    }
-    if (cbd ) {
-      filters.sensitiveTopics = { $in: ['CBD'] };
-    }
-    if (adult ) {
-      filters.sensitiveTopics = { $in: ['Adult'] };
-    }
-    if (trading ) {
-      filters.sensitiveTopics = { $in: ['Trading'] };
-    }
-    if (googleNews) {
-      filters.googleNews = googleNews === 'true';
+
+    // Handle sensitive topics
+    const sensitiveTopics = [];
+    if (gambling) sensitiveTopics.push('Gambling');
+    if (cbd) sensitiveTopics.push('CBD');
+    if (adult) sensitiveTopics.push('Adult');
+    if (trading) sensitiveTopics.push('Trading');
+
+    if (sensitiveTopics.length > 0) {
+      filters.sensitiveTopics = { $in: sensitiveTopics };
     }
 
-    // fetch websites with filters and approved true
-    const websites = await Website.find({ ...filters, status: 'approved' });
+    if (googleNews !== undefined) {
+      filters.googleNews = googleNews === true || googleNews === 'true';
+    }
 
-    // Update stats for each website found
+    const websites = await Website.find(filters);
+
+    // Update stats
     const { year, month, day } = getCurrentDateTime();
-
     for (const website of websites) {
       await createOrUpdateStats({
         userId,
@@ -86,14 +95,15 @@ export async function searchWebsites(req, res) {
         year,
         month,
         day,
-        updates: {
-          impressions: 1
-        }
+        updates: { impressions: 1 }
       });
     }
 
     res.status(200).json(websites);
   } catch (error) {
-    res.status(500).json({ message: 'Error searching websites', error: error.message });
+    res.status(500).json({ 
+      message: 'Error searching websites', 
+      error: error.message 
+    });
   }
 }

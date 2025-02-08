@@ -4,11 +4,6 @@ import {
   FaEye,
   FaShoppingCart,
   FaStar,
-  FaSort,
-  FaSortAlphaDown,
-  FaSortAlphaUp,
-  FaSortNumericDown,
-  FaSortNumericUp,
 } from "react-icons/fa";
 import { BiSpreadsheet, BiGridAlt } from "react-icons/bi";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -178,6 +173,8 @@ const Catalog = () => {
     initializeFavorites();
   }, [user]);
 
+
+
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -227,173 +224,156 @@ const Catalog = () => {
   
     setWebsites(sortedWebsites);
   };
-  const handleSearch = useCallback(
-    debounce(async () => {
-      try {
-        setLoading(true); // Start loading
-        const searchParams = {
-          userId: user._id,
-        };
+  const handleSearch = useCallback(async () => {
+    try {
+      setLoading(true);
   
-        if (searchQuery) {
-          searchParams.searchQuery = searchQuery.toLowerCase();
-        }
+      // Build search parameters
+      const searchParams = {
+        userId: user._id
+      };
   
-        if (priceRange.min > 0 || priceRange.max < 50000) {
-          searchParams.minPrice = priceRange.min;
-          searchParams.maxPrice = priceRange.max;
-        }
-        if (da > 0) searchParams.da = da;
-        if (ascore > 0) searchParams.ascore = ascore;
-        if (mediaType) searchParams.mediaType = mediaType;
-        if (category) searchParams.category = category;
-        if (country) searchParams.country = country;
-        if (googleNews) searchParams.googleNews = googleNews === "Yes";
-  
-        if (sensitiveTopics.length > 0) {
-          sensitiveTopics.forEach((topic) => {
-            searchParams[topic.toLowerCase()] = true;
-          });
-        }
-  
-        const data = await searchService.searchWebsites(searchParams);
-        // Sort by highlightMonthsEndDate
-        const sortedData = data.sort((a, b) => {
-          const aHighlighted = new Date(a.highlightMonthsEndDate) > new Date();
-          const bHighlighted = new Date(b.highlightMonthsEndDate) > new Date();
-  
-          if (aHighlighted && !bHighlighted) return -1;
-          if (!aHighlighted && bHighlighted) return 1;
-  
-          return 0;
-        });
-        setWebsites(sortedData);
-      } catch (error) {
-        console.error("Error searching websites:", error);
-      } finally {
-        setLoading(false); // End loading
+      // Only add parameters if they have values
+      if (searchQuery.trim()) {
+        searchParams.searchQuery = searchQuery.trim();
       }
+  
+      if (priceRange.min > 0) {
+        searchParams.minPrice = priceRange.min;
+      }
+  
+      if (priceRange.max < 50000) {
+        searchParams.maxPrice = priceRange.max;
+      }
+  
+      if (da > 0) {
+        searchParams.da = [da, 100];
+      }
+  
+      if (ascore > 0) {
+        searchParams.ascore = [ascore, 100];
+      }
+  
+      if (mediaType) {
+        searchParams.mediaType = mediaType;
+      }
+  
+      if (category) {
+        searchParams.category = category;
+      }
+  
+      if (country) {
+        searchParams.country = country;
+      }
+  
+      if (googleNews) {
+        searchParams.googleNews = googleNews === "Yes";
+      }
+  
+      // Handle sensitive topics
+      if (sensitiveTopics.includes("Gambling")) {
+        searchParams.gambling = true;
+      }
+      if (sensitiveTopics.includes("CBD")) {
+        searchParams.cbd = true;
+      }
+      if (sensitiveTopics.includes("Adult")) {
+        searchParams.adult = true;
+      }
+      if (sensitiveTopics.includes("Trading")) {
+        searchParams.trading = true;
+      }
+  
+      const data = await searchService.searchWebsites(searchParams);
+  
+      // Sort by highlight status
+      const sortedData = data.sort((a, b) => {
+        const aHighlighted = new Date(a.highlightMonthsEndDate) > new Date();
+        const bHighlighted = new Date(b.highlightMonthsEndDate) > new Date();
+  
+        if (aHighlighted && !bHighlighted) return -1;
+        if (!aHighlighted && bHighlighted) return 1;
+        return 0;
+      });
+  
+      setWebsites(sortedData);
+  
+      if (data.length === 0) {
+        toast.error("No websites match your search criteria");
+      }
+  
+    } catch (error) {
+      console.error("Error searching websites:", error);
+      toast.error("Failed to search websites");
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    searchQuery,
+    priceRange,
+    da,
+    ascore,
+    mediaType,
+    category,
+    country,
+    googleNews,
+    sensitiveTopics,
+    user._id
+  ]);
+  
+  const debouncedSearch = useCallback(
+    debounce(() => {
+      handleSearch();
     }, 300),
-    [
-      searchQuery,
-      priceRange,
-      da,
-      ascore,
-      mediaType,
-      category,
-      country,
-      googleNews,
-      sensitiveTopics,
-    ]
+    [handleSearch]
   );
 
   useEffect(() => {
-    const handleInitialLoad = async () => {
-      const params = new URLSearchParams(location.search);
-    
-      const queryFromURL = params.get("query");
-      const minPriceFromURL = params.get("minPrice");
-      const maxPriceFromURL = params.get("maxPrice");
-      const daFromURL = params.get("da");
-      const ascoreFromURL = params.get("ascore");
-      const mediaTypeFromURL = params.get("mediaType");
-      const categoryFromURL = params.get("category");
-      const countryFromURL = params.get("country");
-      const googleNewsFromURL = params.get("googleNews");
-      const sensitiveTopicsFromURL = params.getAll("sensitiveTopics");
-    
-      if (
-        queryFromURL ||
-        minPriceFromURL ||
-        maxPriceFromURL ||
-        daFromURL ||
-        ascoreFromURL ||
-        mediaTypeFromURL ||
-        categoryFromURL ||
-        countryFromURL ||
-        googleNewsFromURL ||
-        sensitiveTopicsFromURL.length > 0
-      ) {
-        if (queryFromURL) setSearchQuery(queryFromURL);
-        if (minPriceFromURL || maxPriceFromURL) {
-          setPriceRange({
-            min: parseInt(minPriceFromURL) || 0,
-            max: parseInt(maxPriceFromURL) || 50000,
-          });
-        }
-        if (daFromURL) setDa(parseInt(daFromURL));
-        if (ascoreFromURL) setAscore(parseInt(ascoreFromURL));
-        if (mediaTypeFromURL) setMediaType(mediaTypeFromURL);
-        if (categoryFromURL) setCategory(categoryFromURL);
-        if (countryFromURL) setCountry(countryFromURL);
-        if (googleNewsFromURL) setGoogleNews(googleNewsFromURL);
-        if (sensitiveTopicsFromURL.length > 0) {
-          setSensitiveTopics(sensitiveTopicsFromURL);
-        }
-    
-        const searchParams = {
-          userId: user._id,
-          ...(queryFromURL && { searchQuery: queryFromURL.toLowerCase() }),
-          ...(minPriceFromURL && { minPrice: parseInt(minPriceFromURL) }),
-          ...(maxPriceFromURL && { maxPrice: parseInt(maxPriceFromURL) }),
-          ...(daFromURL && { da: parseInt(daFromURL) }),
-          ...(ascoreFromURL && { ascore: parseInt(ascoreFromURL) }),
-          ...(mediaTypeFromURL && { mediaType: mediaTypeFromURL }),
-          ...(categoryFromURL && { category: categoryFromURL }),
-          ...(countryFromURL && { country: countryFromURL }),
-          ...(googleNewsFromURL && { googleNews: googleNewsFromURL === "Yes" }),
-        };
-    
-        if (sensitiveTopicsFromURL.length > 0) {
-          sensitiveTopicsFromURL.forEach((topic) => {
-            searchParams[topic.toLowerCase()] = true;
-          });
-        }
-    
-        try {
-          setLoading(true); // Start loading
-          const data = await searchService.searchWebsites(user._id, searchParams);
-          // Sort by highlightMonthsEndDate
-          const sortedData = data.sort((a, b) => {
-            const aHighlighted = new Date(a.highlightMonthsEndDate) > new Date();
-            const bHighlighted = new Date(b.highlightMonthsEndDate) > new Date();
-    
-            if (aHighlighted && !bHighlighted) return -1;
-            if (!aHighlighted && bHighlighted) return 1;
-    
-            return 0;
-          });
-          setWebsites(sortedData);
-        } catch (error) {
-          console.error("Error searching websites:", error);
-        } finally {
-          setLoading(false); // End loading
-        }
-      } else {
-        try {
-          setLoading(true); // Start loading
-          const data = await websiteService.getAllWebsites(user._id);
-          // Sort by highlightMonthsEndDate
-          const sortedData = data.sort((a, b) => {
-            const aHighlighted = new Date(a.highlightMonthsEndDate) > new Date();
-            const bHighlighted = new Date(b.highlightMonthsEndDate) > new Date();
-    
-            if (aHighlighted && !bHighlighted) return -1;
-            if (!aHighlighted && bHighlighted) return 1;
-    
-            return 0;
-          });
-          setWebsites(sortedData);
-        } catch (error) {
-          console.error("Error fetching websites:", error);
-        } finally {
-          setLoading(false); // End loading
-        }
-      }
-    };
+    if (user?._id) {
+      handleSearch();
+    }
+  }, [searchQuery, priceRange, da, ascore, mediaType, category, country, googleNews, sensitiveTopics, handleSearch, user]);
 
-    handleInitialLoad();
-  }, [location.search]);
+useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  
+  // Set all the search states from URL parameters without triggering search
+  const queryFromURL = params.get("query");
+  const minPriceFromURL = params.get("minPrice");
+  const maxPriceFromURL = params.get("maxPrice");
+  const daFromURL = params.get("da");
+  const ascoreFromURL = params.get("ascore");
+  const mediaTypeFromURL = params.get("mediaType");
+  const categoryFromURL = params.get("category");
+  const countryFromURL = params.get("country");
+  const googleNewsFromURL = params.get("googleNews");
+  const sensitiveTopicsFromURL = params.getAll("sensitiveTopics");
+
+  // Update states
+  if (queryFromURL) setSearchQuery(queryFromURL);
+  if (minPriceFromURL || maxPriceFromURL) {
+    setPriceRange({
+      min: parseInt(minPriceFromURL) || 0,
+      max: parseInt(maxPriceFromURL) || 50000
+    });
+  }
+  if (daFromURL) setDa(parseInt(daFromURL));
+  if (ascoreFromURL) setAscore(parseInt(ascoreFromURL));
+  if (mediaTypeFromURL) setMediaType(mediaTypeFromURL);
+  if (categoryFromURL) setCategory(categoryFromURL);
+  if (countryFromURL) setCountry(countryFromURL);
+  if (googleNewsFromURL) setGoogleNews(googleNewsFromURL);
+  if (sensitiveTopicsFromURL.length > 0) {
+    setSensitiveTopics(sensitiveTopicsFromURL);
+  }
+}, [location.search]); // Remove handleSearch from dependencies
+
+// Add a separate useEffect to handle the search after states are set
+useEffect(() => {
+  if (location.search && user?._id) {
+    handleSearch();
+  }
+}, [user, location.search]); // This will run only once when URL params are set and user is available
 
   const handleReset = async () => {
     setSearchQuery("");
@@ -405,16 +385,24 @@ const Catalog = () => {
     setCountry("");
     setGoogleNews("");
     setSensitiveTopics([]);
-    navigate("/advertiser/catalogue", { replace: true });
-
+    
     try {
-      setLoading(true); // Start loading
+      setLoading(true);
       const data = await websiteService.getAllWebsites(user._id);
-      setWebsites(data);
+      const sortedData = data.sort((a, b) => {
+        const aHighlighted = new Date(a.highlightMonthsEndDate) > new Date();
+        const bHighlighted = new Date(b.highlightMonthsEndDate) > new Date();
+        if (aHighlighted && !bHighlighted) return -1;
+        if (!aHighlighted && bHighlighted) return 1;
+        return 0;
+      });
+      setWebsites(sortedData);
+      navigate("/advertiser/catalogue", { replace: true });
     } catch (error) {
       console.error("Error fetching websites:", error);
+      toast.error("Failed to reset search");
     } finally {
-      setLoading(false); // End loading
+      setLoading(false);
     }
   };
 

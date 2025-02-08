@@ -304,9 +304,11 @@ export const emailChangeService = {
   }
 };
 
+
+
 export const searchService = {
   searchWebsites: async ({
-    userId, // Added userId parameter
+    userId,
     searchQuery,
     minPrice,
     maxPrice,
@@ -319,38 +321,37 @@ export const searchService = {
     cbd,
     adult,
     trading,
-    googleNews,
-    page = 1,
-    limit = 10,
+    googleNews
   }) => {
     try {
-      const response = await api.get('/advertiser/search-websites', {
-        params: {
-          searchQuery,
-          minPrice,
-          maxPrice,
-          da,
-          ascore,
-          mediaType,
-          category,
-          country,
-          gambling,
-          cbd,
-          adult,
-          trading,
-          googleNews,
-          page,
-          limit,
-        },
-        data: { userId }, // Add userId in the request body
+      // Clean search query if present
+      const cleanQuery = searchQuery?.toLowerCase()
+        .replace(/^(https?:\/\/)?(www\.)?/, '')
+        .replace(/\/$/, '');
+
+      const response = await api.post('/advertiser/search-websites', {
+        userId,
+        searchQuery: cleanQuery,
+        minPrice,
+        maxPrice,
+        da,
+        ascore,
+        mediaType,
+        category,
+        country,
+        gambling,
+        cbd,
+        adult,
+        trading,
+        googleNews
       });
+
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
     }
-  },
+  }
 };
-
 export const cartService = {
   getCarts: async (userId) => {
     try {

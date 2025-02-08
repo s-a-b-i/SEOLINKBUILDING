@@ -231,14 +231,11 @@ const Dashboard = () => {
 
   const handleSearch = () => {
     const searchParams = new URLSearchParams();
-
-    if (searchQuery) {
-      searchParams.append('query', searchQuery);
-    }
-    if (priceRange.min > 0 || priceRange.max < 50000) {
-      searchParams.append('minPrice', priceRange.min.toString());
-      searchParams.append('maxPrice', priceRange.max.toString());
-    }
+    
+    // Add all parameters with proper checks
+    if (searchQuery) searchParams.append('query', searchQuery);
+    if (priceRange.min > 0) searchParams.append('minPrice', priceRange.min.toString());
+    if (priceRange.max < 50000) searchParams.append('maxPrice', priceRange.max.toString());
     if (da > 0) searchParams.append('da', da.toString());
     if (ascore > 0) searchParams.append('ascore', ascore.toString());
     if (mediaType) searchParams.append('mediaType', mediaType);
@@ -250,10 +247,11 @@ const Dashboard = () => {
         searchParams.append('sensitiveTopics', topic);
       });
     }
-
+  
+    // Navigate with the search parameters
     navigate(`/advertiser/catalogue?${searchParams.toString()}`);
   };
-
+  
   const handleReset = () => {
     setSearchQuery("");
     setPriceRange({ min: 0, max: 50000 });
