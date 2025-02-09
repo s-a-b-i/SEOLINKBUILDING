@@ -13,7 +13,7 @@ const NavbarPublisher = ({ userName }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const { logout, user } = useAuthStore();
+  const { logout, user, balance } = useAuthStore();
   const navigate = useNavigate(); // Initialize useNavigate
 
   useEffect(() => {
@@ -67,13 +67,10 @@ const NavbarPublisher = ({ userName }) => {
 
         {/* Desktop Right Section */}
         <div className="hidden lg:flex items-center gap-4 md:gap-6">
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-            <img src="/flags/us.svg" alt="US Flag" className="w-6 h-4" />
-            <MdKeyboardArrowDown className="w-5 h-5 text-gray-600" />
-          </div>
+          
 
           <div className="bg-foundations-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-            € 0.00 / 0.00
+            € {balance.toFixed(2)}
           </div>
 
           {/* Profile Dropdown */}
@@ -145,8 +142,8 @@ const NavbarPublisher = ({ userName }) => {
                 <span className="text-gray-700 font-medium">United States</span>
               </div>
             </div>
-            <div className="bg-foundations-primary text-white px-4 py-2.5 rounded-lg text-center font-medium">
-              € 0.00 / 0.00
+            <div className="bg-foundations-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+              € {balance.toFixed(2)}
             </div>
             <div className="border-t pt-4">
               <span className="text-gray-700 font-medium">Hi, {userName}!</span>

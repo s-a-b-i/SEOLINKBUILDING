@@ -18,7 +18,7 @@ const NavbarAdvertiser = ({ userName }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const { cartCount, updateCartCount } = useCartStore();
   const dropdownRef = useRef(null);
-  const { logout , user } = useAuthStore();
+  const { logout , user , balance } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -79,14 +79,11 @@ const NavbarAdvertiser = ({ userName }) => {
 
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center gap-4 md:gap-6">
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-            <img src="/flags/us.svg" alt="US Flag" className="w-6 h-4" />
-            <MdKeyboardArrowDown className="w-5 h-5 text-gray-600" />
-          </div>
+         
 
           <div className="bg-foundations-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-            € 0.00 / 0.00
-          </div>
+  € {balance.toFixed(2)}
+</div>
 
           <div className="relative cursor-pointer" onClick={handleNavigateToCart}>
             <MdShoppingCart className="w-6 h-6 text-gray-700" />
