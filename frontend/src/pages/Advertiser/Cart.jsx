@@ -223,10 +223,13 @@
 // };
 
 // export default Cart;
+
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { cartService, websiteService } from "../../utils/services";
+import { paymentService } from "../../utils/paymentservices";
+import { useNavigate } from "react-router-dom";
 import { FaTrashAlt } from "react-icons/fa";
 import useCartStore from "../../store/cartStore";
 import ProductCard from "../../components/Advertiser/ProductCard";
@@ -240,6 +243,7 @@ const Cart = () => {
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true); // Loading state
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const fetchCartItems = async () => {
     if (!user?._id) return;
@@ -341,6 +345,27 @@ const Cart = () => {
     fetchCartItems();
   }, [user._id]);
 
+  const handleCheckout = async () => {
+    try {
+      const formattedCartItems = cartItems.map(item => ({
+        _id: item.websiteId,
+        price: parseFloat(item.websiteDetails?.price || 0),
+        commission: parseFloat(item.websiteDetails?.commission || 0)
+      }));
+  
+      const response = await paymentService.createOrder(formattedCartItems, user._id);
+      
+      if (response.success && response.data.approveUrl) {
+        window.location.href = response.data.approveUrl;
+      } else {
+        toast.error("Failed to initialize checkout");
+      }
+    } catch (error) {
+      toast.error("Error processing checkout");
+      console.error("Checkout error:", error);
+    }
+  };
+
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
       const price = item.websiteDetails?.price
@@ -426,15 +451,12 @@ const Cart = () => {
             </span>
           </div>
           <div className="flex justify-end mt-4">
-      <button 
-        className="bg-foundations-primary text-white px-8 py-3 rounded-lg hover:opacity-90 transition-opacity font-semibold"
-        onClick={() => {
-          // Add your checkout logic here
-          console.log("Proceeding to checkout");
-        }}
-      >
-        Proceed to Checkout
-      </button>
+          <button 
+  className="bg-foundations-primary text-white px-8 py-3 rounded-lg hover:opacity-90 transition-opacity font-semibold"
+  onClick={handleCheckout}
+>
+  Proceed to Checkout
+</button>
     </div>
         </div>
       )}

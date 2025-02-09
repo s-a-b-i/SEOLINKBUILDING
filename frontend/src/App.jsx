@@ -56,6 +56,8 @@ import AdminReports from "./pages/Admin/Reports";
 import AdminSettings from "./pages/Admin/Settings";
 import AdminProfile from "./pages/Admin/Profile";
 import { LogOutIcon, UserX } from "lucide-react";
+import PaymentSuccess from "./components/payments/PaymentSuccess.jsx";
+import PaymentCancel from "./components/payments/PaymentCancel.jsx";
 
 const ProtectedRoutes = ({ children }) => {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -294,6 +296,9 @@ const App = () => {
               <Route path="/advertiser/favorite" element={<Favorite />} />
               <Route path="/advertiser/profile" element={<Profile />} />
               <Route path="/advertiser/cart" element={<Cart />} />
+              // In the advertiser routes section:
+<Route path="/advertiser/payment-success/:orderId" element={<PaymentSuccess />} />
+<Route path="/advertiser/payment-cancel::orderId" element={<PaymentCancel />} />
               <Route
                 path="/advertiser/deposit"
                 element={<AdvertiserDeposit />}

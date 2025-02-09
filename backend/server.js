@@ -16,6 +16,7 @@ import stats from './routes/stats.routes.js';
 import usersMangAdmin from './routes/admin/userMang.routes.js';
 import contentRoutesAdmin from './routes/admin/content.routes.js';
 import faqRoutes from './routes/admin/faq.routes.js';
+import paymentRoutes from './routes/payment.routes.js'; 
 
 dotenv.config();
 
@@ -65,6 +66,8 @@ app.use('/api/admin', faqRoutes);
 // public FAQ routes
 app.use('/api', faqRoutes);
 
+//payment routes
+app.use('/api/payments', paymentRoutes);
 // Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
