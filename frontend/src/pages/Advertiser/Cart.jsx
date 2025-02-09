@@ -425,6 +425,17 @@ const Cart = () => {
               {calculateTotal().toFixed(2)} €
             </span>
           </div>
+          <div className="flex justify-end mt-4">
+      <button 
+        className="bg-foundations-primary text-white px-8 py-3 rounded-lg hover:opacity-90 transition-opacity font-semibold"
+        onClick={() => {
+          // Add your checkout logic here
+          console.log("Proceeding to checkout");
+        }}
+      >
+        Proceed to Checkout
+      </button>
+    </div>
         </div>
       )}
 
